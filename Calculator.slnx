@@ -19,6 +19,6 @@
     <File Path="SpecDriven/Features/HomePageCalculatorApp.md" />
     <File Path="SpecDriven/Features/MutuoCalculator.md" />
   </Folder>
-  <Project Path="Calcuator/Calcuator.csproj" />
+  <Project Path="Calculator/Calculator.csproj" />
   <Project Path="PipelineRunner/PipelineRunner.csproj" Id="2a306e1a-7a52-47ad-8e7e-7cdb10acea60" />
 </Solution>
