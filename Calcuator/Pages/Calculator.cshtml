@@ -1,0 +1,424 @@
+@page
+@model Calcuator.Pages.CalculatorModel
+@{
+    ViewData["Title"] = "Calculator";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h2 class="text-center mb-4">Simple Calculator</h2>
+            <div class="d-flex justify-content-end mb-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#historyModal">History</button>
+            </div>
+            
+            <form id="calculatorForm" method="post" class="calculator-form">
+                @Html.AntiForgeryToken()
+                <!-- Display Area -->
+                <div class="mb-3">
+                    <input id="currentDisplay" 
+                           type="text" 
+                           class="form-control calculator-display" 
+                           readonly 
+                           placeholder="Digit Here..."
+                           value="@(Model.Result?.ToString("F2") ?? "")" />
+                </div>
+
+                <!-- Hidden Inputs for Form Binding -->
+                <input id="aInput" type="hidden" asp-for="A" />
+                <input id="bInput" type="hidden" asp-for="B" />
+                <input id="operationInput" type="hidden" asp-for="Operation" />
+
+                <!-- Error Message Display -->
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @Model.ErrorMessage
+                    </div>
+                }
+
+                <!-- Keypad Grid (4x4) -->
+                <div class="keypad">
+                    <div class="row g-2">
+                        <!-- Row 1: 7, 8, 9, / -->
+                        <div class="col-3">
+                            <button type="button" class="btn btn-secondary keypad-button w-100" onclick="appendToDisplay('7')">7</button>
+                        </div>
+                        <div class="col-3">
+                            <button type="button" class="btn btn-secondary keypad-button w-100" onclick="appendToDisplay('8')">8</button>
+                        </div>
+                        <div class="col-3">
+                            <button type="button" class="btn btn-secondary keypad-button w-100" onclick="appendToDisplay('9')">9</button>
+                        </div>
+                        <div class="col-3">
+                            <button type="button" class="btn btn-warning operation-button w-100" onclick="setOperation('div')">÷</button>
+                        </div>
+
+                        <!-- Row 2: 4, 5, 6, * -->
+                        <div class="col-3">
+                            <button type="button" class="btn btn-secondary keypad-button w-100" onclick="appendToDisplay('4')">4</button>
+                        </div>
+                        <div class="col-3">
+                            <button type="button" class="btn btn-secondary keypad-button w-100" onclick="appendToDisplay('5')">5</button>
+                        </div>
+                        <div class="col-3">
+                            <button type="button" class="btn btn-secondary keypad-button w-100" onclick="appendToDisplay('6')">6</button>
+                        </div>
+                        <div class="col-3">
+                            <button type="button" class="btn btn-warning operation-button w-100" onclick="setOperation('mul')">×</button>
+                        </div>
+
+                        <!-- Row 3: 1, 2, 3, - -->
+                        <div class="col-3">
+                            <button type="button" class="btn btn-secondary keypad-button w-100" onclick="appendToDisplay('1')">1</button>
+                        </div>
+                        <div class="col-3">
+                            <button type="button" class="btn btn-secondary keypad-button w-100" onclick="appendToDisplay('2')">2</button>
+                        </div>
+                        <div class="col-3">
+                            <button type="button" class="btn btn-secondary keypad-button w-100" onclick="appendToDisplay('3')">3</button>
+                        </div>
+                        <div class="col-3">
+                            <button type="button" class="btn btn-warning operation-button w-100" onclick="setOperation('sub')">−</button>
+                        </div>
+
+                        <!-- Row 4: 0, ., %, + -->
+                        <div class="col-3">
+                            <button type="button" class="btn btn-secondary keypad-button w-100" onclick="appendToDisplay('0')">0</button>
+                        </div>
+                        <div class="col-3">
+                            <button type="button" class="btn btn-secondary keypad-button w-100" onclick="appendToDisplay('.')">.</button>
+                        </div>
+                        <div class="col-3">
+                            <button type="button" class="btn btn-secondary keypad-button w-100" onclick="applyPercent()">%</button>
+                        </div>
+                        <div class="col-3">
+                            <button type="button" class="btn btn-warning operation-button w-100" onclick="setOperation('add')">+</button>
+                        </div>
+
+                        <!-- Row 5: = -->
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary keypad-button w-100">=</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clear Button -->
+                <div class="mt-3">
+                    <button type="button" class="btn btn-danger w-100" onclick="clearAll()">Clear</button>
+                </div>
+            </form>
+
+            <div class="modal fade" id="historyModal" tabindex="-1" aria-labelledby="historyModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="historyModalLabel">History</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="historyContent">
+                                @if (Model.History is null || Model.History.Count == 0)
+                                {
+                                    <div class="text-muted">No history</div>
+                                }
+                                else
+                                {
+                                    <ul class="list-group">
+                                        @foreach (var entry in Model.History.Reverse())
+                                        {
+                                            <li class="list-group-item small">
+                                                @entry.A.ToString("F2") @GetOpSymbol(entry.Operation) @entry.B.ToString("F2") = @entry.Result.ToString("F2")
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    private static string GetOpSymbol(string op) => op switch
+    {
+        "add" => "+",
+        "sub" => "−",
+        "mul" => "×",
+        "div" => "÷",
+        _ => op
+    };
+}
+
+@section Scripts {
+<script>
+    // State management
+    let currentInput = '';
+    let operandA = null;
+    let operandB = null;
+    let operation = '@Model.Operation';
+    let isEnteringB = false;
+    let percentApplied = false;
+    let resultShown = false;
+
+    // Append digit or decimal point to current input
+    function appendToDisplay(value) {
+        // Prevent multiple decimal points
+        if (value === '.' && currentInput.includes('.')) {
+            return;
+        }
+
+        if (resultShown && !isEnteringB) {
+            // Start a new calculation when typing after a shown result.
+            currentInput = '';
+            operandA = null;
+            operandB = null;
+            operation = 'add';
+            document.getElementById('operationInput').value = operation;
+            isEnteringB = false;
+            resultShown = false;
+        }
+
+        percentApplied = false;
+        currentInput += value;
+        updateDisplay();
+    }
+
+    function applyPercent() {
+        if (currentInput === '' || percentApplied) {
+            return;
+        }
+
+        let x = parseFloat(currentInput);
+        if (Number.isNaN(x)) {
+            return;
+        }
+
+        if (!isEnteringB) {
+            // Simple mode: x% -> x/100
+            x = x / 100;
+            currentInput = x.toString();
+        } else {
+            // Contextual mode: A op B% -> transform B
+            // Ensure operandA is set.
+            if (operandA === null) {
+                operandA = 0;
+            }
+
+            const b = x;
+            switch (operation) {
+                case 'add':
+                case 'sub':
+                    x = operandA * (b / 100);
+                    break;
+                case 'mul':
+                case 'div':
+                    x = b / 100;
+                    break;
+                default:
+                    x = b / 100;
+                    break;
+            }
+
+            currentInput = x.toString();
+        }
+
+        percentApplied = true;
+        updateDisplay();
+    }
+
+    // Set mathematical operation
+    function setOperation(op) {
+        if (resultShown && operandA !== null) {
+            // Use the displayed result as A and prepare to enter B.
+            currentInput = '';
+            isEnteringB = true;
+        }
+
+        if (currentInput !== '' && !isEnteringB) {
+            // First operand entered, store it
+            operandA = parseFloat(currentInput);
+            currentInput = '';
+            isEnteringB = true;
+        }
+        
+        operation = op;
+        percentApplied = false;
+        document.getElementById('operationInput').value = op;
+        highlightOperation(op);
+    }
+
+    // Calculate result (form submission handled by server)
+    // Set hidden inputs before form submits
+    document.getElementById('calculatorForm').addEventListener('submit', function(e) {
+        try {
+            if (currentInput !== '') {
+                const parsed = parseFloat(currentInput);
+                if (!Number.isFinite(parsed)) {
+                    e.preventDefault();
+                    alert('Please enter valid numbers.');
+                    return;
+                }
+
+                if (!isEnteringB) {
+                    // Only one operand entered, use it for both
+                    operandA = parsed;
+                    operandB = parsed;
+                } else {
+                    // Second operand entered
+                    operandB = parsed;
+                }
+            }
+
+            // If user selected an operation but never provided A, treat as invalid
+            if (isEnteringB && (operandA === null || !Number.isFinite(operandA))) {
+                e.preventDefault();
+                alert('Please enter the first number.');
+                return;
+            }
+
+            if (operandA === null || operandB === null || !Number.isFinite(operandA) || !Number.isFinite(operandB)) {
+                e.preventDefault();
+                alert('Please enter both numbers.');
+                return;
+            }
+
+            document.getElementById('aInput').value = operandA;
+            document.getElementById('bInput').value = operandB;
+        } catch {
+            e.preventDefault();
+            alert('Please enter valid numbers.');
+        }
+    });
+
+    // Clear form and reset state
+    function clearForm() {
+        currentInput = '';
+        operandA = null;
+        operandB = null;
+        operation = 'add';
+        isEnteringB = false;
+        percentApplied = false;
+        resultShown = false;
+        
+        document.getElementById('currentDisplay').value = '';
+        document.getElementById('aInput').value = '';
+        document.getElementById('bInput').value = '';
+        document.getElementById('operationInput').value = 'add';
+        
+        // Clear error messages
+        const errorAlert = document.querySelector('.alert-danger');
+        if (errorAlert) {
+            errorAlert.remove();
+        }
+        
+        highlightOperation('add');
+    }
+
+    async function clearAll() {
+        clearForm();
+
+        const historyContent = document.getElementById('historyContent');
+        if (historyContent) {
+            historyContent.innerHTML = '<div class="text-muted">No history</div>';
+        }
+
+        try {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            const body = new URLSearchParams();
+            if (token) {
+                body.append('__RequestVerificationToken', token);
+            }
+
+            await fetch('?handler=ClearHistory', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: body.toString()
+            });
+        } catch {
+            // ignore
+        }
+    }
+
+    // Update display with current input
+    function updateDisplay() {
+        document.getElementById('currentDisplay').value = currentInput;
+    }
+
+    // Highlight active operation button
+    function highlightOperation(op) {
+        document.querySelectorAll('.operation-button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        // Add highlight logic if needed (e.g., add 'active' class)
+    }
+
+    // Initialize on page load
+    window.addEventListener('DOMContentLoaded', function() {
+        highlightOperation(operation);
+        const displayEl = document.getElementById('currentDisplay');
+
+        // Sync JS state from server-rendered result so sequential operations work.
+        const displayValue = displayEl.value;
+        const parsedDisplay = parseFloat(displayValue);
+        if (Number.isFinite(parsedDisplay) && displayValue !== '' && currentInput === '') {
+            operandA = parsedDisplay;
+            operandB = null;
+            isEnteringB = false;
+            resultShown = true;
+            percentApplied = false;
+        }
+    });
+</script>
+}
+
+@section Styles {
+<style>
+    .calculator-display {
+        font-size: 2rem;
+        text-align: right;
+        background-color: #f8f9fa;
+        border: 2px solid #343a40;
+        padding: 15px;
+        margin-bottom: 15px;
+        font-family: 'Courier New', monospace;
+    }
+
+    .keypad-button {
+        font-size: 1.5rem;
+        padding: 20px;
+        min-height: 60px;
+    }
+
+    .operation-button {
+        background-color: #ff9800;
+        border-color: #ff9800;
+        color: white;
+    }
+
+    .operation-button:hover {
+        background-color: #e68900;
+        border-color: #e68900;
+    }
+
+    .operation-button.active {
+        background-color: #cc7a00;
+        border-color: #cc7a00;
+    }
+
+    .calculator-form {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+</style>
+}

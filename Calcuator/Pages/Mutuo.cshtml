@@ -1,0 +1,154 @@
+@page
+@model Calcuator.Pages.MutuoModel
+@{
+    ViewData["Title"] = "Mutuo";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h2 class="text-center mb-4">Simulatore Piano di Ammortamento Mutuo</h2>
+
+            <form method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="PageIndex" id="pageIndexInput" />
+
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @Model.ErrorMessage
+                    </div>
+                }
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="ImportoMutuo" class="form-label">Importo mutuo (€)</label>
+                                <input asp-for="ImportoMutuo" type="number" step="0.01" min="0.01" class="form-control" placeholder="es. 150000" />
+                                <span asp-validation-for="ImportoMutuo" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="TassoInteresse" class="form-label">Tasso di interesse annuo (%)</label>
+                                <input asp-for="TassoInteresse" type="number" step="0.01" min="0.01" max="99.99" class="form-control" placeholder="es. 3.50" />
+                                <span asp-validation-for="TassoInteresse" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="DurataAnni" class="form-label">Durata (anni)</label>
+                                <input asp-for="DurataAnni" type="number" min="1" max="100" class="form-control" placeholder="es. 20" />
+                                <span asp-validation-for="DurataAnni" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="FrequenzaRate" class="form-label">Frequenza rate</label>
+                                <select asp-for="FrequenzaRate" class="form-select">
+                                    @foreach (var freq in Model.FrequenzeDisponibili)
+                                    {
+                                        <option value="@freq.Value">@freq.Label</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="FrequenzaRate" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="DataInizio" class="form-label">Data di inizio</label>
+                                <input asp-for="DataInizio" type="date" class="form-control" />
+                                <span asp-validation-for="DataInizio" class="text-danger small"></span>
+                            </div>
+                        </div>
+                        <div class="mt-3 text-end">
+                            <button type="submit" class="btn btn-primary">Calcola</button>
+                        </div>
+                    </div>
+                </div>
+
+                @if (Model.Piano != null)
+                {
+                    <div class="card mb-4">
+                        <div class="card-header fw-semibold">Riepilogo</div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-6 col-md-3 mb-2">
+                                    <div class="text-muted small">Importo rata</div>
+                                    <div class="fw-bold">@Model.Piano.Rata.ToString("F2") €</div>
+                                </div>
+                                <div class="col-6 col-md-3 mb-2">
+                                    <div class="text-muted small">Totale interessi</div>
+                                    <div class="fw-bold">@Model.Piano.TotaleInteressi.ToString("F2") €</div>
+                                </div>
+                                <div class="col-6 col-md-3 mb-2">
+                                    <div class="text-muted small">Capitale restituito</div>
+                                    <div class="fw-bold">@Model.Piano.TotaleCapitale.ToString("F2") €</div>
+                                </div>
+                                <div class="col-6 col-md-3 mb-2">
+                                    <div class="text-muted small">Totale complessivo</div>
+                                    <div class="fw-bold">@Model.Piano.TotaleComplessivo.ToString("F2") €</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header fw-semibold">
+                            Piano di ammortamento
+                            <span class="text-muted fw-normal small ms-2">(@Model.Piano.Righe.Count rate totali)</span>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped table-bordered mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>N°</th>
+                                            <th>Data</th>
+                                            <th class="text-end">Rata (€)</th>
+                                            <th class="text-end">Q. Capitale (€)</th>
+                                            <th class="text-end">Q. Interessi (€)</th>
+                                            <th class="text-end">Cap. Residuo (€)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var riga in Model.RighePagina)
+                                        {
+                                            <tr>
+                                                <td>@riga.NumeroRata</td>
+                                                <td>@riga.Data.ToString("dd/MM/yyyy")</td>
+                                                <td class="text-end">@riga.ImportoRata.ToString("F2")</td>
+                                                <td class="text-end">@riga.QuotaCapitale.ToString("F2")</td>
+                                                <td class="text-end">@riga.QuotaInteressi.ToString("F2")</td>
+                                                <td class="text-end">@riga.CapitaleResiduo.ToString("F2")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        @if (Model.TotalPages > 1)
+                        {
+                            <div class="card-footer d-flex justify-content-between align-items-center">
+                                <button type="button" class="btn btn-outline-secondary btn-sm"
+                                        onclick="changePage(@(Model.PageIndex - 1))"
+                                        @(Model.PageIndex <= 0 ? "disabled" : "")>
+                                    &laquo; Precedente
+                                </button>
+                                <span class="text-muted small">Pagina @(Model.PageIndex + 1) di @Model.TotalPages</span>
+                                <button type="button" class="btn btn-outline-secondary btn-sm"
+                                        onclick="changePage(@(Model.PageIndex + 1))"
+                                        @(Model.PageIndex >= Model.TotalPages - 1 ? "disabled" : "")>
+                                    Successivo &raquo;
+                                </button>
+                            </div>
+                        }
+                    </div>
+                }
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function changePage(index) {
+            document.getElementById('pageIndexInput').value = index;
+            document.querySelector('form').submit();
+        }
+    </script>
+}

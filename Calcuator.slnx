@@ -1,0 +1,24 @@
+<Solution>
+  <Folder Name="/InputFiles/" />
+  <Folder Name="/SpecDriven-Component/" />
+  <Folder Name="/SpecDriven-Component/Context/" />
+  <Folder Name="/SpecDriven-Component/Orchestrators/">
+    <File Path="SpecDriven-Component/Orchestrators/orchestrator-pipeline-auto.md" />
+    <File Path="SpecDriven-Component/Orchestrators/orchestrator-pipeline-auto_Step2.md" />
+  </Folder>
+  <Folder Name="/SpecDriven-Component/Prompts/">
+    <File Path="SpecDriven-Component/Prompts/apply-refinement.md" />
+    <File Path="SpecDriven-Component/Prompts/domain-update-prompt.md" />
+    <File Path="SpecDriven-Component/Prompts/instructions.md" />
+    <File Path="SpecDriven-Component/Prompts/refinement-prompt.md" />
+    <File Path="SpecDriven-Component/Prompts/structuring-prompt.md" />
+  </Folder>
+  <Folder Name="/SpecDriven/" />
+  <Folder Name="/SpecDriven/Features/">
+    <File Path="SpecDriven/Features/Calculator.md" />
+    <File Path="SpecDriven/Features/HomePageCalculatorApp.md" />
+    <File Path="SpecDriven/Features/MutuoCalculator.md" />
+  </Folder>
+  <Project Path="Calcuator/Calcuator.csproj" />
+  <Project Path="PipelineRunner/PipelineRunner.csproj" Id="2a306e1a-7a52-47ad-8e7e-7cdb10acea60" />
+</Solution>

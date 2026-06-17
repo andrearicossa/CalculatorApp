@@ -1,0 +1,8 @@
+APPLY:
+- ISS-01
+- ISS-02
+- ISS-04
+- ISS-05
+
+SKIP:
+- ISS-03
